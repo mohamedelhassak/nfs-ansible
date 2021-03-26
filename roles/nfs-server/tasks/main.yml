@@ -1,0 +1,76 @@
+---
+# tasks file for n
+    - name: Create group {{ grp }}
+      group:
+        name: "{{ grp }}"
+        state: present
+        gid: 1010
+
+    - name: Create users
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        password: "{{ pass | password_hash('sha512') }}"
+        group: "{{ grp }}"
+        home: "{{ nfsexport }}"
+        shell: /sbin/nologin
+        uid: "{{ item.uid }}"
+      loop:
+      - {name: 'user1', uid: '1001'}
+      - {name: 'user2', uid: '1002'}
+
+    - name: install nfs-kernel-server
+      apt: name=nfs-kernel-server state=latest
+
+    - name: Create {{ nfsexport }}
+      file:
+        path: "{{ nfsexport }}"
+        state: directory
+        owner: root
+        group: "{{ grp }}"
+        mode: '755'
+
+ 
+    - name: Create stage/SFTP/upload
+      file:
+        path: "{{ nfsexport }}/upload"
+        state: directory
+        owner: "{{ item }}"
+        group: "{{ grp }}"
+        mode: '777'
+      loop:
+      - user1
+      - user2
+ 
+
+    - template:
+       src: ssh_config.j2
+       dest: /etc/ssh/sshd_config
+       group: "{{ grp }}"
+       mode: 0777
+    
+    - ufw:
+       rule: allow
+       port: "{{ port }}"
+       proto: tcp
+
+    - name: restart sshd
+      service: name=sshd state=restarted
+
+    - template:
+       src: exports.j2
+       dest: /etc/exports
+       group: "{{ grp }}"
+       mode: 0777
+
+    - name: enable rpcbind nfslock nfs
+      service:
+        name: "{{ item }}"
+        enabled: yes
+      with_items:
+        - rpcbind
+        - nfs-server
+    - name: NFS apply change configrue
+      shell: systemctl reload nfs;exportfs -a
+ 
+
+

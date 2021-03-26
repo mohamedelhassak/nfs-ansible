@@ -1,0 +1,5 @@
+---
+# defaults file for nfs
+nfsexport: /stage/SFTP
+grp: group1
+port: 55022

@@ -1,0 +1,12 @@
+---
+- hosts: node1
+  become: yes
+  gather_facts: false
+  roles:
+  - role: nfs-server
+
+- hosts: node2
+  become: yes
+  gather_facts: false
+  roles: 
+  - role: nfs-client

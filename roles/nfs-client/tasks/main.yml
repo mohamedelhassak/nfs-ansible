@@ -1,0 +1,71 @@
+---
+    - name: Create Group {{ grp }}
+      group:
+        name: "{{ grp }}"
+        state: present
+        gid: 1010
+
+    - name: Create Dir {{ nfsmount }}
+      file:
+        path: "{{ nfsmount }}"
+        state: directory
+        owner: root
+        group: "{{ grp }}"
+        mode: '755'
+
+
+    - name: Add the user 'user3'
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        password: "{{ pass | password_hash('sha512') }}"
+        group: "{{ grp }}"
+        home: "{{ nfsmount }}"
+        shell: /sbin/nologin
+        uid: "{{ item.uid }}"
+      loop:
+      - {name: 'user3', uid: '1003'}
+
+    - name: install nfs client
+      action: apt pkg=nfs-common state=present
+      tags:
+      - nfs
+
+    - name: Create {{ nfsmount }}/upload
+      file:
+        path: "{{ nfsmount }}/upload"
+        state: directory
+        owner: "{{ item }}"
+        group: "{{ grp }}"
+        mode: '777'
+      loop:
+      - user3
+
+    - template:
+       src: ssh_config.j2
+       dest: /etc/ssh/sshd_config
+       group: "{{ grp }}"
+    
+    - ufw:
+       rule: allow
+       port: "{{ port  }}"
+       proto: tcp     
+
+    - name: restart sshd
+      service: name=sshd state=restarted
+
+    
+    - name: enable rpcbind nfslock nfs
+      service:
+        name: "{{ item }}"
+        enabled: yes
+      with_items:
+        - rpcbind
+   
+    - name: mount volume
+      mount:
+       name="{{ nfsmount }}"
+       src="{{ nfsserver }}:/{{ nfsexport }}"
+       fstype=nfs
+       opts=defaults,rwx,bg
+       dump=0
+       state=mounted

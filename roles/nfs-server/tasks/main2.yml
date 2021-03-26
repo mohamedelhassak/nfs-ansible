@@ -1,0 +1,74 @@
+---
+# tasks file for n
+    - name: Create group
+      group:
+        name: "group1"
+        state: present
+        gid: 1010
+
+    - name: Add the user 'user1'
+      ansible.builtin.user:
+        name: "{{ item }}"
+        password: "{{ pass | password_hash('sha512') }}"
+        group: group1
+        home: /upload
+        shell: /sbin/nologin
+      loop:
+      - user1
+      - user2
+
+    - name: install nfs-kernel-server
+      apt: name=nfs-kernel-server state=latest
+
+    - name: Create SFTP
+      file:
+        path: /stage/SFTP
+        state: directory
+
+    - name: Create a mountable directory if it does not exist
+      file:
+        path: /stage/SFTP/{{ item }}/upload
+        state: directory
+        owner: "{{ item }}"
+        group: group1
+      loop:
+      - user1
+      - user2
+
+
+    - name: Create a mountable directory if it does not exist
+      file:
+        path: /stage/SFTP/{{ item }}
+        state: directory
+        owner: root
+        group: group1
+        mode: 755
+      loop:
+      - user1
+      - user2
+
+       - template:
+       src: ssh_config.j2
+       dest: /etc/ssh/sshd_config
+       group: group1
+       mode: 0777
+
+    - name: restart sshd
+      service: name=sshd state=restarted
+
+    - template:
+       src: exports.j2
+       dest: /etc/exports
+       group: group1
+       mode: 0777
+
+    - name: enable rpcbind nfslock nfs
+      service:
+        name: "{{ item }}"
+        enabled: yes
+      with_items:
+        - rpcbind
+        - nfs-server
+    - name: NFS apply change configrue
+      shell: systemctl reload nfs;exportfs -a
+
