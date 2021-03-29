@@ -15,8 +15,8 @@
         shell: /sbin/nologin
         uid: "{{ item.uid }}"
       loop:
-      - {name: 'user1', uid: '1001'}
-      - {name: 'user2', uid: '1002'}
+      - {name: 'user1', uid: '1101'}
+      - {name: 'user2', uid: '1102'}
 
     - name: install nfs-kernel-server
       apt: name=nfs-kernel-server state=latest

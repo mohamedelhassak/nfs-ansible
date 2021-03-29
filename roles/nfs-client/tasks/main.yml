@@ -23,7 +23,7 @@
         shell: /sbin/nologin
         uid: "{{ item.uid }}"
       loop:
-      - {name: 'user3', uid: '1003'}
+      - {name: 'user3', uid: '1103'}
 
     - name: install nfs client
       action: apt pkg=nfs-common state=present
@@ -66,6 +66,6 @@
        name="{{ nfsmount }}"
        src="{{ nfsserver }}:/{{ nfsexport }}"
        fstype=nfs
-       opts=defaults,rwx,bg
+       opts=defaults,rw,bg
        dump=0
        state=mounted

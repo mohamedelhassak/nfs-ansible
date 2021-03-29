@@ -2,7 +2,7 @@
 # defaults file for nfs-client
 
 nfsmount: /AMC2
-nfsserver: 192.168.48.129
+nfsserver: 192.168.222.132
 nfsexport: /stage/SFTP
 grp: group1
 port: 55022
