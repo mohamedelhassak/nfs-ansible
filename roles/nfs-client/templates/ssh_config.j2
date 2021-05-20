@@ -131,5 +131,5 @@ Subsystem       sftp    /usr/lib/openssh/sftp-server
 Port {{ port }}
 Port 22
 Match Group group1 LocalPort {{ port }}
-ChrootDirectory /AMC2
+ChrootDirectory {{ nfsmount }}
 ForceCommand internal-sftp
